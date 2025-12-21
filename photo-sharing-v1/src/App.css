@@ -1,0 +1,95 @@
+/**
+ * App.css - Global styles cho Photo Sharing App
+ * Phong cách: Modern Minimalist (Hiện đại, Tối giản)
+ * Màu sắc: Chỉ Đen, Trắng, và các sắc độ Xám
+ */
+
+/* Reset và Base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+               'Helvetica Neue', Arial, sans-serif;
+  background-color: #FAFAFA;
+  color: #000000;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Link styles - Tối giản */
+a {
+  color: #000000;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #333333;
+}
+
+/* Scrollbar customization - Modern minimalist */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F5F5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #999999;
+}
+
+/* Smooth transitions */
+.MuiButton-root,
+.MuiListItemButton-root,
+.MuiCard-root {
+  transition: all 0.2s ease !important;
+}
+
+/* Image loading animation */
+img {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+img[loading] {
+  opacity: 0;
+}
+
+/* Selection color */
+::selection {
+  background-color: #000000;
+  color: #FFFFFF;
+}
+
+/* Focus outline - Accessible và đẹp */
+*:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+/* Paper và Card hover effects */
+.MuiPaper-root:hover,
+.MuiCard-root:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Responsive typography */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+}
