@@ -27,8 +27,8 @@ import {
 } from '@mui/icons-material';
 import fetchModel from '../../lib/fetchModelData';
 
-const IMAGE_BASE_URL = 'http://localhost:3001/images';
-const API_BASE = 'http://localhost:3001';
+const IMAGE_BASE_URL = 'http://localhost:8080/images';
+const API_BASE = 'http://localhost:8080';
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);

@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Grid, Paper, Box, CircularProgress } from '@mui/material';
+import { CssBaseline, Grid, Paper, Box, CircularProgress, Typography } from '@mui/material';
 
 import TopBar from './components/TopBar';
 import UserList from './components/UserList';
@@ -19,7 +19,7 @@ import ErrorPage, { ErrorBoundary } from './components/ErrorPage';
 
 import './App.css';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'http://localhost:8080';
 
 /**
  * Modern Dark Granite Glassmorphism Theme
@@ -133,6 +133,36 @@ const theme = createTheme({
   },
 });
 
+/**
+ * ProtectedRoute - Redirect to login if not authenticated
+ */
+function ProtectedRoute({ user, children }) {
+  if (!user) {
+    return <Navigate to="/login-register" replace />;
+  }
+  return children;
+}
+
+/**
+ * Layout with sidebar for authenticated users
+ */
+function AuthenticatedLayout({ children }) {
+  return (
+    <Grid container spacing={3}>
+      <Grid item xs={12} sm={4} md={3}>
+        <Paper elevation={0} sx={{ overflow: 'hidden', position: 'sticky', top: 80 }}>
+          <UserList />
+        </Paper>
+      </Grid>
+      <Grid item xs={12} sm={8} md={9}>
+        <Paper elevation={0} sx={{ minHeight: 400, overflow: 'hidden' }}>
+          {children}
+        </Paper>
+      </Grid>
+    </Grid>
+  );
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -199,97 +229,75 @@ function App() {
 
             <Box component="main" sx={{ flexGrow: 1, paddingTop: '80px', paddingX: 2, paddingBottom: 4 }}>
               <Routes>
-                {/* Login/Register Route */}
+                {/* Login/Register Route - Public */}
                 <Route
                   path="/login-register"
                   element={
                     user ? (
-                      <Navigate to="/users" replace />
+                      <Navigate to={`/users/${user._id}`} replace />
                     ) : (
                       <LoginRegister onLoginSuccess={handleLoginSuccess} />
                     )
                   }
                 />
 
-                {/* Public Routes - Cho phép guest xem */}
+                {/* Protected Routes - Require login */}
                 <Route
                   path="/users/:userId"
                   element={
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} sm={4} md={3}>
-                        <Paper elevation={0} sx={{ overflow: 'hidden', position: 'sticky', top: 80 }}>
-                          <UserList />
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={12} sm={8} md={9}>
-                        <Paper elevation={0} sx={{ minHeight: 400, overflow: 'hidden' }}>
-                          <UserDetail setContextText={handleSetContextText} />
-                        </Paper>
-                      </Grid>
-                    </Grid>
+                    <ProtectedRoute user={user}>
+                      <AuthenticatedLayout>
+                        <UserDetail setContextText={handleSetContextText} />
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
                   }
                 />
 
                 <Route
                   path="/photos/:userId"
                   element={
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} sm={4} md={3}>
-                        <Paper elevation={0} sx={{ overflow: 'hidden', position: 'sticky', top: 80 }}>
-                          <UserList />
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={12} sm={8} md={9}>
-                        <Paper elevation={0} sx={{ minHeight: 400, overflow: 'hidden' }}>
-                          <UserPhotos advancedFeatures={advancedFeatures} setContextText={handleSetContextText} user={user} />
-                        </Paper>
-                      </Grid>
-                    </Grid>
+                    <ProtectedRoute user={user}>
+                      <AuthenticatedLayout>
+                        <UserPhotos advancedFeatures={advancedFeatures} setContextText={handleSetContextText} user={user} />
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
                   }
                 />
 
                 <Route
                   path="/comments/:userId"
                   element={
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} sm={4} md={3}>
-                        <Paper elevation={0} sx={{ overflow: 'hidden', position: 'sticky', top: 80 }}>
-                          <UserList />
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={12} sm={8} md={9}>
-                        <Paper elevation={0} sx={{ minHeight: 400, overflow: 'hidden' }}>
-                          <UserComments setContextText={handleSetContextText} />
-                        </Paper>
-                      </Grid>
-                    </Grid>
+                    <ProtectedRoute user={user}>
+                      <AuthenticatedLayout>
+                        <UserComments setContextText={handleSetContextText} />
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
                   }
                 />
 
                 <Route
                   path="/users"
                   element={
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} sm={4} md={3}>
-                        <Paper elevation={0} sx={{ overflow: 'hidden', position: 'sticky', top: 80 }}>
-                          <UserList />
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={12} sm={8} md={9}>
-                        <Paper elevation={0} sx={{ minHeight: 400, overflow: 'hidden' }}>
-                          <Box sx={{ padding: 3, textAlign: 'center', color: '#B0B0B0' }}>
-                            Select a user from the list to view their profile
-                          </Box>
-                        </Paper>
-                      </Grid>
-                    </Grid>
+                    <ProtectedRoute user={user}>
+                      <AuthenticatedLayout>
+                        <Box sx={{ padding: 3, textAlign: 'center', color: '#B0B0B0' }}>
+                          <Typography>Select a user from the list to view their profile</Typography>
+                        </Box>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
                   }
                 />
 
-                {/* Default redirect - Vào thẳng /users thay vì login */}
+                {/* Default redirect - Go to login if not authenticated, else to user profile */}
                 <Route
                   path="/"
-                  element={<Navigate to="/users" replace />}
+                  element={
+                    user ? (
+                      <Navigate to={`/users/${user._id}`} replace />
+                    ) : (
+                      <Navigate to="/login-register" replace />
+                    )
+                  }
                 />
 
                 {/* Error Page for 404 */}
@@ -313,3 +321,4 @@ function App() {
 }
 
 export default App;
+

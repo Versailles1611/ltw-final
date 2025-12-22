@@ -27,7 +27,7 @@ import {
   Login as LoginIcon,
 } from '@mui/icons-material';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = 'http://localhost:8080';
 
 function TopBar({ advancedFeatures, setAdvancedFeatures, contextText, user, onLogout }) {
   const [uploadOpen, setUploadOpen] = useState(false);

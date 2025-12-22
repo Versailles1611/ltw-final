@@ -17,7 +17,7 @@ const fs = require('fs');
 
 const app = express();
 const PORT = 8080;
-const MONGODB_URI = 'mongodb://127.0.0.1:27017/project-photo-sharing'; // ĐÃ SỬA: Đổi tên DB
+const MONGODB_URI = 'mongodb+srv://yentth321:yentth321@yencluster.qqbzlz7.mongodb.net/simple_blog?appName=YenCluster'; // ĐÃ SỬA: Đổi tên DB
 
 // ============================================
 // MIDDLEWARE SETUP
@@ -255,9 +255,9 @@ app.post('/user', async (req, res) => {
 // ============================================
 
 /**
- * GET /user/list - Cho phép guest xem danh sách user
+ * GET /user/list - Yêu cầu đăng nhập để xem danh sách user
  */
-app.get('/user/list', async (req, res) => {
+app.get('/user/list', requireLogin, async (req, res) => {
     try {
         const users = await User.find({}, '_id first_name last_name').lean();
         res.json(users);
@@ -267,9 +267,9 @@ app.get('/user/list', async (req, res) => {
 });
 
 /**
- * GET /user/:id - Cho phép guest xem thông tin user
+ * GET /user/:id - Yêu cầu đăng nhập để xem thông tin user
  */
-app.get('/user/:id', async (req, res) => {
+app.get('/user/:id', requireLogin, async (req, res) => {
     try {
         const user = await User.findById(req.params.id, '_id first_name last_name location description occupation').lean();
         if (!user) {
@@ -282,9 +282,9 @@ app.get('/user/:id', async (req, res) => {
 });
 
 /**
- * GET /photosOfUser/:id - Cho phép guest xem photos
+ * GET /photosOfUser/:id - Yêu cầu đăng nhập để xem photos
  */
-app.get('/photosOfUser/:id', async (req, res) => {
+app.get('/photosOfUser/:id', requireLogin, async (req, res) => {
     try {
         const userExists = await User.exists({ _id: req.params.id });
         if (!userExists) {
@@ -325,9 +325,9 @@ app.get('/photosOfUser/:id', async (req, res) => {
 });
 
 /**
- * GET /users/stats - Cho phép guest xem stats
+ * GET /users/stats - Yêu cầu đăng nhập để xem stats
  */
-app.get('/users/stats', async (req, res) => {
+app.get('/users/stats', requireLogin, async (req, res) => {
     try {
         const users = await User.find({}, '_id').lean();
         const allPhotos = await Photo.find({}).lean();

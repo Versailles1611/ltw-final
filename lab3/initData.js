@@ -9,8 +9,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// MongoDB Connection URI - ĐÃ SỬA: Đổi tên DB
-const MONGODB_URI = 'mongodb://127.0.0.1:27017/project-photo-sharing';
+// MongoDB Connection URI - ĐÃ SỬA: Dùng MongoDB Atlas
+const MONGODB_URI = 'mongodb+srv://yentth321:yentth321@yencluster.qqbzlz7.mongodb.net/simple_blog?appName=YenCluster';
 
 // ============================================
 // MONGOOSE SCHEMAS (Updated with login credentials)

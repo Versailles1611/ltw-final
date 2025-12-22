@@ -22,7 +22,7 @@ import {
     PersonAdd as PersonAddIcon,
 } from '@mui/icons-material';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = 'http://localhost:8080';
 
 function LoginRegister({ onLoginSuccess }) {
     const [tabValue, setTabValue] = useState(0); // 0: Login, 1: Register
