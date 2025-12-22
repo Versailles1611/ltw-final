@@ -27,8 +27,19 @@ import {
 } from '@mui/icons-material';
 import fetchModel from '../../lib/fetchModelData';
 
-const IMAGE_BASE_URL = 'http://localhost:8080/images';
-const API_BASE = 'http://localhost:8080';
+// Auto-detect API URL based on environment
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.includes('csb.app') || hostname.includes('codesandbox')) {
+      return '';
+    }
+  }
+  return 'http://localhost:8080';
+};
+
+const API_BASE = getBaseUrl();
+const IMAGE_BASE_URL = API_BASE ? `${API_BASE}/images` : '/images';
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);

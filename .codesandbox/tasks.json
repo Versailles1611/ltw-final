@@ -1,0 +1,34 @@
+{
+    "setupTasks": [
+        {
+            "name": "Install Backend Dependencies",
+            "command": "cd lab3 && npm install"
+        },
+        {
+            "name": "Install Frontend Dependencies",
+            "command": "cd photo-sharing-v1 && npm install"
+        },
+        {
+            "name": "Initialize Database",
+            "command": "cd lab3 && node initData.js"
+        }
+    ],
+    "tasks": {
+        "backend": {
+            "name": "Backend Server",
+            "command": "cd lab3 && npm start",
+            "runAtStart": true,
+            "preview": {
+                "port": 8080
+            }
+        },
+        "frontend": {
+            "name": "Frontend App",
+            "command": "cd photo-sharing-v1 && npm start",
+            "runAtStart": true,
+            "preview": {
+                "port": 3000
+            }
+        }
+    }
+}

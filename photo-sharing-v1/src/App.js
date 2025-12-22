@@ -19,7 +19,18 @@ import ErrorPage, { ErrorBoundary } from './components/ErrorPage';
 
 import './App.css';
 
-const API_BASE = 'http://localhost:8080';
+// Auto-detect API URL based on environment
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.includes('csb.app') || hostname.includes('codesandbox')) {
+      return '';
+    }
+  }
+  return 'http://localhost:8080';
+};
+
+const API_BASE = getBaseUrl();
 
 /**
  * Modern Dark Granite Glassmorphism Theme

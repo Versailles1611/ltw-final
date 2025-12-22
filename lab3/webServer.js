@@ -23,23 +23,44 @@ const MONGODB_URI = 'mongodb+srv://yentth321:yentth321@yencluster.qqbzlz7.mongod
 // MIDDLEWARE SETUP
 // ============================================
 
-// CORS với credentials
+// CORS với credentials - Hỗ trợ cả localhost và CodeSandbox
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: function (origin, callback) {
+        // Cho phép requests không có origin (như mobile apps, curl, etc)
+        if (!origin) return callback(null, true);
+        
+        // Whitelist các origins được phép
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:3001',
+        ];
+        
+        // Cho phép tất cả CodeSandbox domains
+        if (origin.includes('csb.app') || 
+            origin.includes('codesandbox.io') || 
+            origin.includes('csb.io') ||
+            allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
 }));
 
 app.use(express.json());
 
-// Session middleware
+// Session middleware - Hỗ trợ cả localhost và CodeSandbox
+const isProduction = process.env.NODE_ENV === 'production';
 app.use(session({
     secret: 'photo-sharing-secret-key-2024',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // true nếu dùng HTTPS
+        secure: isProduction, // true nếu HTTPS (CodeSandbox dùng HTTPS)
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: isProduction ? 'none' : 'lax', // 'none' cho cross-origin (CodeSandbox)
     },
 }));
 
