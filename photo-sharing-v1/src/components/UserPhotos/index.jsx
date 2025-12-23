@@ -25,6 +25,12 @@ import {
   Send as SendIcon,
   Schedule as ScheduleIcon,
 } from "@mui/icons-material";
+
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Cancel";
+import axios from "axios"; // Đảm bảo đã cài: npm install axios
 import fetchModel from "../../lib/fetchModelData";
 
 // Auto-detect API URL based on environment
@@ -57,6 +63,9 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
   const { userId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [editingCommentId, setEditingCommentId] = useState(null); // ID của comment đang sửa
+  const [editVal, setEditVal] = useState(""); // Nội dung đang sửa
 
   useEffect(() => {
     if (!userId) return;
@@ -161,6 +170,46 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
       setSubmittingComment((prev) => ({ ...prev, [photoId]: false }));
     }
   };
+  const handleDeleteComment = async (photoId, commentId) => {
+    if (!window.confirm("Bạn có chắc muốn xóa comment này?")) return;
+
+    try {
+      await axios.delete(`https://w267l6-8080.csb.app/commentsOfPhoto/${photoId}/${commentId}`, {
+         withCredentials: true // Quan trọng để gửi session cookie
+      });
+      // Sau khi xóa xong, load lại dữ liệu để cập nhật giao diện
+      // Gọi lại hàm load ảnh của bạn (ví dụ: fetchPhotos() hoặc reload lại trang)
+      window.location.reload(); 
+    } catch (err) {
+      console.error("Lỗi xóa comment:", err);
+      alert("Không thể xóa comment (Bạn không phải chủ bài viết hoặc chủ comment)");
+    }
+  };
+
+  // 2. Hàm Bắt đầu sửa (Hiện ô nhập liệu)
+  const handleStartEdit = (comment) => {
+    setEditingCommentId(comment._id);
+    setEditVal(comment.comment);
+  };
+
+  // 3. Hàm Gửi nội dung sửa lên Server
+  const handleSubmitEdit = async (photoId, commentId) => {
+    try {
+      await axios.put(
+        `https://w267l6-8080.csb.app/commentsOfPhoto/${photoId}/${commentId}`,
+        { comment: editVal },
+        { withCredentials: true }
+      );
+      // Reset trạng thái
+      setEditingCommentId(null);
+      setEditVal("");
+      // Load lại trang hoặc cập nhật state
+      window.location.reload();
+    } catch (err) {
+      console.error("Lỗi sửa comment:", err);
+      alert("Lỗi khi sửa comment");
+    }
+  };
 
   if (loading) {
     return (
@@ -240,50 +289,66 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
               Comments ({photo.comments.length})
             </Typography>
 
-            {photo.comments.map((comment) => (
-              <Paper
-                key={comment._id}
-                elevation={0}
-                sx={{
-                  padding: 1.5,
-                  marginBottom: 1,
-                  backgroundColor: "rgba(60, 60, 60, 0.5)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: 2,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: 0.5,
-                  }}
-                >
-                  <Link
-                    to={`/users/${comment.user._id}`}
-                    style={{
-                      textDecoration: "none",
-                      color: "#FFFFFF",
-                      fontWeight: 600,
-                      fontSize: "0.875rem",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.textDecoration = "underline";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.textDecoration = "none";
-                    }}
-                  >
-                    {comment.user.first_name} {comment.user.last_name}
-                  </Link>
-                  <Typography variant="caption" sx={{ color: "#808080" }}>
-                    {formatDate(comment.date_time)}
-                  </Typography>
-                </Box>
-                <Typography variant="body2" sx={{ color: "#B0B0B0" }}>
-                  {comment.comment}
-                </Typography>
-              </Paper>
+            {photo.comments && photo.comments.map((comment) => (
+              <Box key={comment._id} sx={{ mb: 1, p: 1, bgcolor: "rgba(0,0,0,0.03)", borderRadius: 1 }}>
+                
+                {/* LOGIC HIỂN THỊ: NẾU ĐANG SỬA THÌ HIỆN INPUT, KHÔNG THÌ HIỆN TEXT */}
+                {editingCommentId === comment._id ? (
+                  // --- GIAO DIỆN SỬA ---
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <TextField 
+                      fullWidth size="small" variant="outlined" 
+                      value={editVal} 
+                      onChange={(e) => setEditVal(e.target.value)} 
+                    />
+                    <IconButton onClick={() => handleSubmitEdit(photo._id, comment._id)} color="primary">
+                      <SaveIcon />
+                    </IconButton>
+                    <IconButton onClick={() => setEditingCommentId(null)} color="error">
+                      <CancelIcon />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  // --- GIAO DIỆN XEM BÌNH THƯỜNG ---
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                    <Box>
+                      {/* Tên người comment & Nội dung */}
+                      <Typography variant="subtitle2" component={Link} to={`/users/${comment.user_id}`} sx={{ textDecoration: "none", fontWeight: "bold" }}>
+                        {comment.user ? `${comment.user.first_name} ${comment.user.last_name}` : "Unknown User"}
+                      </Typography>
+                      
+                      <Typography variant="body2" sx={{ color: "#FFFFF1" }}>
+                        {comment.comment}
+                      </Typography>
+                      
+                      <Typography variant="caption" sx={{ color: "#aaa" }}>
+                        {new Date(comment.date_time).toLocaleDateString()}
+                        {/* Hiện thêm chữ Edited nếu đã sửa */}
+                        {comment.edited_at && <span> (Edited)</span>}
+                      </Typography>
+                    </Box>
+
+                    {/* CÁC NÚT ACTION: CHỈ HIỆN KHI CÓ QUYỀN */}
+                    {/*<Box>
+                      {/* --- SỬA LẠI ĐOẠN NÀY: Dùng currentUser thay vì props.user --- */}
+                      
+                      {/* Nút Sửa: Chỉ hiện nếu là chính chủ comment */}
+                     {/* {currentUser && comment.user_id === currentUser._id && (
+                        <IconButton size="small" onClick={() => handleStartEdit(comment)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      )}
+
+                      {/* Nút Xóa: Hiện nếu là chủ comment HOẶC chủ bài đăng (photo.user_id) */}
+                     {/* {currentUser && (comment.user_id === currentUser._id || photo.user_id === currentUser._id) && (
+                        <IconButton size="small" onClick={() => handleDeleteComment(photo._id, comment._id)}>
+                          <DeleteIcon fontSize="small" color="error" />
+                        </IconButton>
+                      )}
+                    </Box> */}
+                  </Box>
+                )}
+              </Box>
             ))}
           </Box>
         )}

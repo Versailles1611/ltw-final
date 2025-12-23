@@ -161,9 +161,9 @@ function TopBar({
                     </Typography>
                   }
                 /> */}
-                <Button color="inherit" component={Link} to="/feed">
+                {/* <Button color="inherit" component={Link} to="/feed">
                   News Feed
-                </Button>
+                </Button> */}
                 {/* User Greeting */}
                 <Typography variant="body2" sx={{ color: "#E0E0E0" }}>
                   Hi, {user.first_name}
