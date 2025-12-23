@@ -8,7 +8,7 @@
 const mongoose = require('mongoose');
 
 // MongoDB Connection URI
-const MONGODB_URI = 'mongodb+srv://yentth321:yentth321@yencluster.qqbzlz7.mongodb.net/simple_blog?appName=YenCluster';
+const MONGODB_URI = 'mongodb+srv://yentth321:yentth321@yencluster.qqbzlz7.mongodb.net/final-ltw?appName=YenCluster';
 
 // ============================================
 // MONGOOSE SCHEMAS

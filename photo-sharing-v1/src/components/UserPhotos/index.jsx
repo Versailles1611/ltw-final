@@ -3,9 +3,9 @@
  * Không sử dụng Emoji - Dùng Material UI Icons
  */
 
-import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -18,30 +18,30 @@ import {
   Paper,
   TextField,
   IconButton,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
   ArrowForward as ArrowForwardIcon,
   Send as SendIcon,
   Schedule as ScheduleIcon,
-} from '@mui/icons-material';
-import fetchModel from '../../lib/fetchModelData';
+} from "@mui/icons-material";
+import fetchModel from "../../lib/fetchModelData";
 
 // Auto-detect API URL based on environment
 // Điền thẳng địa chỉ Backend vào đây (lấy từ tab Ports 8080)
-const API_BASE = 'https://w2dy33-8080.csb.app'; 
+const API_BASE = "https://w267l6-8080.csb.app";
 
 // Luôn trỏ về folder images của Backend
 const IMAGE_BASE_URL = `${API_BASE}/images`;
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
@@ -63,8 +63,8 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
 
     const getPhotoIndexFromHash = () => {
       const hash = location.hash;
-      if (hash && hash.includes('photo=')) {
-        const index = parseInt(hash.split('photo=')[1], 10);
+      if (hash && hash.includes("photo=")) {
+        const index = parseInt(hash.split("photo=")[1], 10);
         return isNaN(index) ? 0 : index;
       }
       return 0;
@@ -90,12 +90,14 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
         }
 
         if (setContextText && userData) {
-          setContextText(`Photos of ${userData.first_name} ${userData.last_name}`);
+          setContextText(
+            `Photos of ${userData.first_name} ${userData.last_name}`
+          );
         }
       })
       .catch((err) => {
-        console.error('Error fetching photos:', err);
-        setError('Cannot load photos');
+        console.error("Error fetching photos:", err);
+        setError("Cannot load photos");
         setLoading(false);
       });
   }, [userId, setContextText, location.hash]);
@@ -119,22 +121,22 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
   // Handle Add Comment
   const handleAddComment = async (photoId) => {
     const commentText = commentTexts[photoId];
-    if (!commentText || commentText.trim() === '') return;
+    if (!commentText || commentText.trim() === "") return;
 
     setSubmittingComment((prev) => ({ ...prev, [photoId]: true }));
 
     try {
       const response = await fetch(`${API_BASE}/commentsOfPhoto/${photoId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ comment: commentText.trim() }),
       });
 
       const newComment = await response.json();
 
       if (!response.ok) {
-        throw new Error(newComment.error || 'Failed to add comment');
+        throw new Error(newComment.error || "Failed to add comment");
       }
 
       // Update photos state with new comment
@@ -151,9 +153,9 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
       );
 
       // Clear input
-      setCommentTexts((prev) => ({ ...prev, [photoId]: '' }));
+      setCommentTexts((prev) => ({ ...prev, [photoId]: "" }));
     } catch (err) {
-      console.error('Error adding comment:', err);
+      console.error("Error adding comment:", err);
       alert(err.message);
     } finally {
       setSubmittingComment((prev) => ({ ...prev, [photoId]: false }));
@@ -162,7 +164,7 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", padding: 4 }}>
         <CircularProgress />
       </Box>
     );
@@ -179,7 +181,9 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
   if (photos.length === 0) {
     return (
       <Box sx={{ padding: 2 }}>
-        <Typography color="text.secondary">This user has no photos yet</Typography>
+        <Typography color="text.secondary">
+          This user has no photos yet
+        </Typography>
       </Box>
     );
   }
@@ -192,25 +196,35 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
         image={`${IMAGE_BASE_URL}/${photo.file_name}`}
         alt={`Photo by ${photoOwner?.first_name}`}
         sx={{
-          width: '100%',
+          width: "100%",
           maxHeight: isStepperMode ? 600 : 500,
-          objectFit: 'contain',
-          backgroundColor: 'rgba(20, 20, 20, 0.8)',
+          objectFit: "contain",
+          backgroundColor: "rgba(20, 20, 20, 0.8)",
         }}
       />
 
       <CardContent sx={{ padding: 2 }}>
         {/* Description - Mô tả bài đăng */}
         {photo.description && (
-          <Typography variant="body1" sx={{ color: '#E0E0E0', marginBottom: 2, fontWeight: 500 }}>
+          <Typography
+            variant="body1"
+            sx={{ color: "#E0E0E0", marginBottom: 2, fontWeight: 500 }}
+          >
             {photo.description}
           </Typography>
         )}
 
         {/* Date with Icon */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, marginBottom: 2 }}>
-          <ScheduleIcon sx={{ fontSize: 18, color: '#808080' }} />
-          <Typography variant="body2" sx={{ color: '#808080' }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            marginBottom: 2,
+          }}
+        >
+          <ScheduleIcon sx={{ fontSize: 18, color: "#808080" }} />
+          <Typography variant="body2" sx={{ color: "#808080" }}>
             {formatDate(photo.date_time)}
           </Typography>
         </Box>
@@ -219,7 +233,10 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
         {photo.comments && photo.comments.length > 0 && (
           <Box>
             <Divider sx={{ marginY: 2 }} />
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, marginBottom: 1.5, color: '#FFFFFF' }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 600, marginBottom: 1.5, color: "#FFFFFF" }}
+            >
               Comments ({photo.comments.length})
             </Typography>
 
@@ -230,30 +247,40 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
                 sx={{
                   padding: 1.5,
                   marginBottom: 1,
-                  backgroundColor: 'rgba(60, 60, 60, 0.5)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  backgroundColor: "rgba(60, 60, 60, 0.5)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
                   borderRadius: 2,
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 0.5 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: 0.5,
+                  }}
+                >
                   <Link
                     to={`/users/${comment.user._id}`}
                     style={{
-                      textDecoration: 'none',
-                      color: '#FFFFFF',
+                      textDecoration: "none",
+                      color: "#FFFFFF",
                       fontWeight: 600,
-                      fontSize: '0.875rem',
+                      fontSize: "0.875rem",
                     }}
-                    onMouseEnter={(e) => { e.target.style.textDecoration = 'underline'; }}
-                    onMouseLeave={(e) => { e.target.style.textDecoration = 'none'; }}
+                    onMouseEnter={(e) => {
+                      e.target.style.textDecoration = "underline";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.textDecoration = "none";
+                    }}
                   >
                     {comment.user.first_name} {comment.user.last_name}
                   </Link>
-                  <Typography variant="caption" sx={{ color: '#808080' }}>
+                  <Typography variant="caption" sx={{ color: "#808080" }}>
                     {formatDate(comment.date_time)}
                   </Typography>
                 </Box>
-                <Typography variant="body2" sx={{ color: '#B0B0B0' }}>
+                <Typography variant="body2" sx={{ color: "#B0B0B0" }}>
                   {comment.comment}
                 </Typography>
               </Paper>
@@ -265,23 +292,28 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
         {currentUser && (
           <>
             <Divider sx={{ marginY: 2 }} />
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
               <TextField
                 fullWidth
                 placeholder="Write a comment..."
-                value={commentTexts[photo._id] || ''}
-                onChange={(e) => setCommentTexts((prev) => ({ ...prev, [photo._id]: e.target.value }))}
+                value={commentTexts[photo._id] || ""}
+                onChange={(e) =>
+                  setCommentTexts((prev) => ({
+                    ...prev,
+                    [photo._id]: e.target.value,
+                  }))
+                }
                 size="small"
                 multiline
                 maxRows={3}
                 sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'rgba(60, 60, 60, 0.5)',
-                    color: '#E0E0E0',
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "rgba(60, 60, 60, 0.5)",
+                    color: "#E0E0E0",
                   },
                 }}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleAddComment(photo._id);
                   }
@@ -289,15 +321,22 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
               />
               <IconButton
                 onClick={() => handleAddComment(photo._id)}
-                disabled={submittingComment[photo._id] || !commentTexts[photo._id]?.trim()}
+                disabled={
+                  submittingComment[photo._id] ||
+                  !commentTexts[photo._id]?.trim()
+                }
                 sx={{
-                  backgroundColor: 'rgba(33, 150, 243, 0.3)',
-                  color: '#2196F3',
-                  '&:hover': { backgroundColor: 'rgba(33, 150, 243, 0.5)' },
-                  '&:disabled': { color: '#808080' },
+                  backgroundColor: "rgba(33, 150, 243, 0.3)",
+                  color: "#2196F3",
+                  "&:hover": { backgroundColor: "rgba(33, 150, 243, 0.5)" },
+                  "&:disabled": { color: "#808080" },
                 }}
               >
-                {submittingComment[photo._id] ? <CircularProgress size={20} /> : <SendIcon />}
+                {submittingComment[photo._id] ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <SendIcon />
+                )}
               </IconButton>
             </Box>
           </>
@@ -311,15 +350,28 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
     const currentPhoto = photos[currentPhotoIndex];
 
     return (
-      <Box sx={{ padding: 3, maxWidth: 900, margin: '0 auto' }}>
+      <Box sx={{ padding: 3, maxWidth: 900, margin: "0 auto" }}>
         <Typography
           variant="h5"
-          sx={{ fontWeight: 700, marginBottom: 2, textAlign: 'center', color: '#FFFFFF', letterSpacing: '0.5px' }}
+          sx={{
+            fontWeight: 700,
+            marginBottom: 2,
+            textAlign: "center",
+            color: "#FFFFFF",
+            letterSpacing: "0.5px",
+          }}
         >
           Photos of {photoOwner?.first_name} {photoOwner?.last_name}
         </Typography>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, marginBottom: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 2,
+            marginBottom: 3,
+          }}
+        >
           <Button
             variant="outlined"
             onClick={handlePrevPhoto}
@@ -329,7 +381,15 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
             Previous
           </Button>
 
-          <Typography sx={{ fontWeight: 500, minWidth: 80, textAlign: 'center', alignSelf: 'center', color: '#E0E0E0' }}>
+          <Typography
+            sx={{
+              fontWeight: 500,
+              minWidth: 80,
+              textAlign: "center",
+              alignSelf: "center",
+              color: "#E0E0E0",
+            }}
+          >
             {currentPhotoIndex + 1} / {photos.length}
           </Typography>
 
@@ -351,7 +411,15 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
   // Normal Mode
   return (
     <Box sx={{ padding: 2 }}>
-      <Typography variant="h5" sx={{ fontWeight: 700, marginBottom: 3, color: '#FFFFFF', letterSpacing: '0.5px' }}>
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 700,
+          marginBottom: 3,
+          color: "#FFFFFF",
+          letterSpacing: "0.5px",
+        }}
+      >
         Photos of {photoOwner?.first_name} {photoOwner?.last_name}
       </Typography>
       {photos.map((photo, index) => renderPhotoCard(photo, index, false))}
@@ -362,7 +430,7 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
 UserPhotos.propTypes = {
   advancedFeatures: PropTypes.bool,
   setContextText: PropTypes.func,
-  user: PropTypes.object,  // currentUser - người đang đăng nhập
+  user: PropTypes.object, // currentUser - người đang đăng nhập
 };
 
 UserPhotos.defaultProps = {

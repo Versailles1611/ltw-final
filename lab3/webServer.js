@@ -19,7 +19,7 @@ const app = express();
 app.set("trust proxy", 1);
 const PORT = 8080;
 const MONGODB_URI =
-  "mongodb+srv://yentth321:yentth321@yencluster.qqbzlz7.mongodb.net/simple_blog?appName=YenCluster"; // ĐÃ SỬA: Đổi tên DB
+  "mongodb+srv://yentth321:yentth321@yencluster.qqbzlz7.mongodb.net/final-ltw?appName=YenCluster"; // ĐÃ SỬA: Đổi tên DB
 
 // ============================================
 // MIDDLEWARE SETUP
@@ -585,7 +585,7 @@ app.get("/test/info", (req, res) => {
 // ============================================
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on https://w267l6-8080.csb.app`);
   console.log(
     "Images served from: " +
       path.join(__dirname, "../photo-sharing-v1/src/images")

@@ -42,7 +42,7 @@ import "./App.css";
 //   return 'http://localhost:8080';
 // };
 
-const API_BASE = "https://w2dy33-8080.csb.app";
+const API_BASE = "https://w267l6-8080.csb.app";
 
 /**
  * Modern Dark Granite Glassmorphism Theme

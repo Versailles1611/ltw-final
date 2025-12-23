@@ -17,10 +17,10 @@
 //     }
 //   }
 //   // Nếu chạy local
-//   return "https://w2dy33-8080.csb.app";
+//   return "https://w267l6-8080.csb.app";
 // };
 
-const BASE_URL = "https://w2dy33-8080.csb.app";
+const BASE_URL = "https://w267l6-8080.csb.app";
 
 /**
  * Hàm fetchModel - Gọi API và trả về Promise

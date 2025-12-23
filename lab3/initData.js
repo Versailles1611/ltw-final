@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 // MongoDB Connection URI - ĐÃ SỬA: Dùng MongoDB Atlas
-const MONGODB_URI = 'mongodb+srv://yentth321:yentth321@yencluster.qqbzlz7.mongodb.net/simple_blog?appName=YenCluster';
+const MONGODB_URI = 'mongodb+srv://yentth321:yentth321@yencluster.qqbzlz7.mongodb.net/final-ltw?appName=YenCluster';
 
 // ============================================
 // MONGOOSE SCHEMAS (Updated with login credentials)
