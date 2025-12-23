@@ -4,23 +4,23 @@
  */
 
 // Auto-detect API URL based on environment
-const getBaseUrl = () => {
-  // Nếu chạy trên CodeSandbox, sử dụng relative URL (same origin)
-  // hoặc có thể dùng window.location để build URL
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    // Nếu đang ở CodeSandbox
-    if (hostname.includes('csb.app') || hostname.includes('codesandbox')) {
-      // Backend chạy trên cùng origin với port 8080
-      // CodeSandbox sẽ proxy requests
-      return '';  // Use relative URL, let proxy handle it
-    }
-  }
-  // Nếu chạy local
-  return 'http://localhost:8080';
-};
+// const getBaseUrl = () => {
+//   // Nếu chạy trên CodeSandbox, sử dụng relative URL (same origin)
+//   // hoặc có thể dùng window.location để build URL
+//   if (typeof window !== "undefined") {
+//     const hostname = window.location.hostname;
+//     // Nếu đang ở CodeSandbox
+//     if (hostname.includes("csb.app") || hostname.includes("codesandbox")) {
+//       // Backend chạy trên cùng origin với port 8080
+//       // CodeSandbox sẽ proxy requests
+//       return ""; // Use relative URL, let proxy handle it
+//     }
+//   }
+//   // Nếu chạy local
+//   return "https://w2dy33-8080.csb.app";
+// };
 
-const BASE_URL = getBaseUrl();
+const BASE_URL = "https://w2dy33-8080.csb.app";
 
 /**
  * Hàm fetchModel - Gọi API và trả về Promise
@@ -28,10 +28,10 @@ const BASE_URL = getBaseUrl();
  */
 function fetchModel(url) {
   const apiUrl = BASE_URL ? `${BASE_URL}${url}` : url;
-  
+
   return new Promise((resolve, reject) => {
     fetch(apiUrl, {
-      credentials: 'include', // Gửi cookies cho session
+      credentials: "include", // Gửi cookies cho session
     })
       .then((response) => {
         if (!response.ok) {
@@ -51,4 +51,3 @@ function fetchModel(url) {
 }
 
 export default fetchModel;
-

@@ -19,17 +19,10 @@ import {
 import fetchModel from '../../lib/fetchModelData';
 
 // Auto-detect API URL based on environment
-const getBaseUrl = () => {
-    if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-        if (hostname.includes('csb.app') || hostname.includes('codesandbox')) {
-            return '';
-        }
-    }
-    return 'http://localhost:8080';
-};
+const API_BASE = 'https://w2dy33-8080.csb.app'; 
 
-const IMAGE_BASE_URL = getBaseUrl() ? `${getBaseUrl()}/images` : '/images';
+// Luôn trỏ về folder images của Backend
+const IMAGE_BASE_URL = `${API_BASE}/images`;
 
 const formatDate = (dateString) => {
     const date = new Date(dateString);
