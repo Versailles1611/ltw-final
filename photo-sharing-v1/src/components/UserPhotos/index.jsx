@@ -463,7 +463,7 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
                       </Box>
 
                       {/* CÁC NÚT ACTION: CHỈ HIỆN KHI CÓ QUYỀN */}
-                      <Box>
+                      {/* <Box>
                         {currentUser && comment.user_id === currentUser._id && (
                           <IconButton
                             size="small"
@@ -485,7 +485,7 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
                               <DeleteIcon fontSize="small" color="error" />
                             </IconButton>
                           )}
-                      </Box>
+                      </Box> */}
                     </Box>
                   )}
                 </Box>
