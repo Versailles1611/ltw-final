@@ -66,6 +66,8 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
 
   const [editingCommentId, setEditingCommentId] = useState(null); // ID của comment đang sửa
   const [editVal, setEditVal] = useState(""); // Nội dung đang sửa
+  const [editingPhotoId, setEditingPhotoId] = useState(null); // ID ảnh đang sửa
+  const [editCaptionVal, setEditCaptionVal] = useState("");
 
   useEffect(() => {
     if (!userId) return;
@@ -126,6 +128,54 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
     setCurrentPhotoIndex(newIndex);
     updateUrlHash(newIndex);
   };
+  const handleStartEditCaption = (photo) => {
+    setEditingPhotoId(photo._id);
+    setEditCaptionVal(photo.description || ""); // Nếu không có description thì để rỗng
+  };
+
+  // Hàm lưu caption mới
+  const handleSubmitCaption = async (photoId) => {
+    try {
+      await axios.put(
+        `${API_BASE}/photos/${photoId}`,
+        { description: editCaptionVal },
+        { withCredentials: true }
+      );
+      // Cập nhật lại giao diện ngay lập tức
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p._id === photoId ? { ...p, description: editCaptionVal } : p
+        )
+      );
+      setEditingPhotoId(null); // Tắt chế độ sửa
+    } catch (err) {
+      console.error("Lỗi sửa caption:", err);
+      alert("Không thể sửa mô tả ảnh");
+    }
+  };
+
+  // Hàm Xóa ảnh
+  const handleDeletePhoto = async (photoId) => {
+    if (
+      !window.confirm(
+        "Bạn có chắc chắn muốn xóa ảnh này không? Hành động này không thể hoàn tác."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_BASE}/photos/${photoId}`, {
+        withCredentials: true,
+      });
+
+      // Xóa thành công -> Cập nhật lại giao diện (Xóa ảnh đó khỏi danh sách đang hiện)
+      setPhotos((prev) => prev.filter((p) => p._id !== photoId));
+    } catch (err) {
+      console.error("Lỗi xóa ảnh:", err);
+      alert("Không thể xóa ảnh. Có lỗi xảy ra.");
+    }
+  };
 
   // Handle Add Comment
   const handleAddComment = async (photoId) => {
@@ -174,15 +224,20 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
     if (!window.confirm("Bạn có chắc muốn xóa comment này?")) return;
 
     try {
-      await axios.delete(`https://w267l6-8080.csb.app/commentsOfPhoto/${photoId}/${commentId}`, {
-         withCredentials: true // Quan trọng để gửi session cookie
-      });
+      await axios.delete(
+        `https://w267l6-8080.csb.app/commentsOfPhoto/${photoId}/${commentId}`,
+        {
+          withCredentials: true, // Quan trọng để gửi session cookie
+        }
+      );
       // Sau khi xóa xong, load lại dữ liệu để cập nhật giao diện
       // Gọi lại hàm load ảnh của bạn (ví dụ: fetchPhotos() hoặc reload lại trang)
-      window.location.reload(); 
+      window.location.reload();
     } catch (err) {
       console.error("Lỗi xóa comment:", err);
-      alert("Không thể xóa comment (Bạn không phải chủ bài viết hoặc chủ comment)");
+      alert(
+        "Không thể xóa comment (Bạn không phải chủ bài viết hoặc chủ comment)"
+      );
     }
   };
 
@@ -254,28 +309,80 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
 
       <CardContent sx={{ padding: 2 }}>
         {/* Description - Mô tả bài đăng */}
-        {photo.description && (
-          <Typography
-            variant="body1"
-            sx={{ color: "#E0E0E0", marginBottom: 2, fontWeight: 500 }}
-          >
-            {photo.description}
-          </Typography>
-        )}
+        {/* --- PHẦN HIỂN THỊ VÀ SỬA CAPTION --- */}
+        <Box sx={{ marginBottom: 2 }}>
+          {editingPhotoId === photo._id ? (
+            // GIAO DIỆN KHI ĐANG SỬA (Hiện ô nhập + Nút Save/Cancel)
+            <Box display="flex" alignItems="center" gap={1}>
+              <TextField
+                fullWidth
+                size="small"
+                variant="outlined"
+                multiline
+                value={editCaptionVal}
+                onChange={(e) => setEditCaptionVal(e.target.value)}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    color: "#FFF",
+                    backgroundColor: "rgba(255,255,255,0.1)",
+                  },
+                }}
+              />
+              <IconButton
+                onClick={() => handleSubmitCaption(photo._id)}
+                sx={{ color: "#4caf50" }}
+              >
+                <SaveIcon />
+              </IconButton>
+              <IconButton onClick={() => setEditingPhotoId(null)} color="error">
+                <CancelIcon />
+              </IconButton>
+            </Box>
+          ) : (
+            // GIAO DIỆN XEM BÌNH THƯỜNG
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="flex-start"
+            >
+              <Typography
+                variant="body1"
+                sx={{ color: "#E0E0E0", fontWeight: 500, flex: 1 }}
+              >
+                {photo.description || (
+                  <span style={{ fontStyle: "italic", color: "#888" }}>
+                    No description
+                  </span>
+                )}
+              </Typography>
 
-        {/* Date with Icon */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            marginBottom: 2,
-          }}
-        >
-          <ScheduleIcon sx={{ fontSize: 18, color: "#808080" }} />
-          <Typography variant="body2" sx={{ color: "#808080" }}>
-            {formatDate(photo.date_time)}
-          </Typography>
+              {/* Chỉ hiện nút sửa nếu là chủ sở hữu của ảnh (currentUser) */}
+              {/* {currentUser && photo.user_id === currentUser._id && (
+                // 🔥 CÁI NÀY LÀ QUAN TRỌNG NHẤT: display="flex" giúp các nút nằm ngang
+                <Box display="flex" alignItems="center" gap={0}> 
+                  
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handleStartEditCaption(photo)}
+                    sx={{ opacity: 0.6, "&:hover": { opacity: 1, color: "#2196f3" } }}
+                    title="Sửa mô tả"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handleDeletePhoto(photo._id)}
+                    sx={{ opacity: 0.6, "&:hover": { opacity: 1, color: "#f44336" } }}
+                    title="Xóa ảnh"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+
+                </Box>
+              )} */}
+            </Box>
+          )}
         </Box>
 
         {/* Comments */}
@@ -289,67 +396,100 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
               Comments ({photo.comments.length})
             </Typography>
 
-            {photo.comments && photo.comments.map((comment) => (
-              <Box key={comment._id} sx={{ mb: 1, p: 1, bgcolor: "rgba(0,0,0,0.03)", borderRadius: 1 }}>
-                
-                {/* LOGIC HIỂN THỊ: NẾU ĐANG SỬA THÌ HIỆN INPUT, KHÔNG THÌ HIỆN TEXT */}
-                {editingCommentId === comment._id ? (
-                  // --- GIAO DIỆN SỬA ---
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <TextField 
-                      fullWidth size="small" variant="outlined" 
-                      value={editVal} 
-                      onChange={(e) => setEditVal(e.target.value)} 
-                    />
-                    <IconButton onClick={() => handleSubmitEdit(photo._id, comment._id)} color="primary">
-                      <SaveIcon />
-                    </IconButton>
-                    <IconButton onClick={() => setEditingCommentId(null)} color="error">
-                      <CancelIcon />
-                    </IconButton>
-                  </Box>
-                ) : (
-                  // --- GIAO DIỆN XEM BÌNH THƯỜNG ---
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                    <Box>
-                      {/* Tên người comment & Nội dung */}
-                      <Typography variant="subtitle2" component={Link} to={`/users/${comment.user_id}`} sx={{ textDecoration: "none", fontWeight: "bold" }}>
-                        {comment.user ? `${comment.user.first_name} ${comment.user.last_name}` : "Unknown User"}
-                      </Typography>
-                      
-                      <Typography variant="body2" sx={{ color: "#FFFFF1" }}>
-                        {comment.comment}
-                      </Typography>
-                      
-                      <Typography variant="caption" sx={{ color: "#aaa" }}>
-                        {new Date(comment.date_time).toLocaleDateString()}
-                        {/* Hiện thêm chữ Edited nếu đã sửa */}
-                        {comment.edited_at && <span> (Edited)</span>}
-                      </Typography>
+            {photo.comments &&
+              photo.comments.map((comment) => (
+                <Box
+                  key={comment._id}
+                  sx={{
+                    mb: 1,
+                    p: 1,
+                    bgcolor: "rgba(0,0,0,0.03)",
+                    borderRadius: 1,
+                  }}
+                >
+                  {/* LOGIC HIỂN THỊ: NẾU ĐANG SỬA THÌ HIỆN INPUT, KHÔNG THÌ HIỆN TEXT */}
+                  {editingCommentId === comment._id ? (
+                    // --- GIAO DIỆN SỬA ---
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        variant="outlined"
+                        value={editVal}
+                        onChange={(e) => setEditVal(e.target.value)}
+                      />
+                      <IconButton
+                        onClick={() => handleSubmitEdit(photo._id, comment._id)}
+                        color="primary"
+                      >
+                        <SaveIcon />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => setEditingCommentId(null)}
+                        color="error"
+                      >
+                        <CancelIcon />
+                      </IconButton>
                     </Box>
+                  ) : (
+                    // --- GIAO DIỆN XEM BÌNH THƯỜNG ---
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                    >
+                      <Box>
+                        {/* Tên người comment & Nội dung */}
+                        <Typography
+                          variant="subtitle2"
+                          component={Link}
+                          to={`/users/${comment.user_id}`}
+                          sx={{ textDecoration: "none", fontWeight: "bold" }}
+                        >
+                          {comment.user
+                            ? `${comment.user.first_name} ${comment.user.last_name}`
+                            : "Unknown User"}
+                        </Typography>
 
-                    {/* CÁC NÚT ACTION: CHỈ HIỆN KHI CÓ QUYỀN */}
-                    {/*<Box>
-                      {/* --- SỬA LẠI ĐOẠN NÀY: Dùng currentUser thay vì props.user --- */}
-                      
-                      {/* Nút Sửa: Chỉ hiện nếu là chính chủ comment */}
-                     {/* {currentUser && comment.user_id === currentUser._id && (
-                        <IconButton size="small" onClick={() => handleStartEdit(comment)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      )}
+                        <Typography variant="body2" sx={{ color: "#FFFFF1" }}>
+                          {comment.comment}
+                        </Typography>
 
-                      {/* Nút Xóa: Hiện nếu là chủ comment HOẶC chủ bài đăng (photo.user_id) */}
-                     {/* {currentUser && (comment.user_id === currentUser._id || photo.user_id === currentUser._id) && (
-                        <IconButton size="small" onClick={() => handleDeleteComment(photo._id, comment._id)}>
-                          <DeleteIcon fontSize="small" color="error" />
-                        </IconButton>
-                      )}
-                    </Box> */}
-                  </Box>
-                )}
-              </Box>
-            ))}
+                        <Typography variant="caption" sx={{ color: "#aaa" }}>
+                          {new Date(comment.date_time).toLocaleDateString()}
+                          {/* Hiện thêm chữ Edited nếu đã sửa */}
+                          {comment.edited_at && <span> (Edited)</span>}
+                        </Typography>
+                      </Box>
+
+                      {/* CÁC NÚT ACTION: CHỈ HIỆN KHI CÓ QUYỀN */}
+                      <Box>
+                        {currentUser && comment.user_id === currentUser._id && (
+                          <IconButton
+                            size="small"
+                            onClick={() => handleStartEdit(comment)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        )}
+
+                        {currentUser &&
+                          (comment.user_id === currentUser._id ||
+                            photo.user_id === currentUser._id) && (
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleDeleteComment(photo._id, comment._id)
+                              }
+                            >
+                              <DeleteIcon fontSize="small" color="error" />
+                            </IconButton>
+                          )}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              ))}
           </Box>
         )}
 

@@ -310,18 +310,28 @@ app.get("/posts", requireLogin, async (req, res) => {
     const newPhotos = await Promise.all(
       photos.map(async (photo) => {
         // A. Lấy thông tin người đăng bài
-        const user = await User.findById(photo.user_id, "_id first_name last_name").lean();
+        const user = await User.findById(
+          photo.user_id,
+          "_id first_name last_name"
+        ).lean();
 
         // B. Lấy thông tin người comment (nếu có)
         const commentsWithUser = await Promise.all(
           (photo.comments || []).map(async (comment) => {
-            const commentUser = await User.findById(comment.user_id, "_id first_name last_name").lean();
+            const commentUser = await User.findById(
+              comment.user_id,
+              "_id first_name last_name"
+            ).lean();
             return {
               _id: comment._id,
               comment: comment.comment,
               date_time: comment.date_time,
               user_id: comment.user_id,
-              user: commentUser || { _id: null, first_name: "Unknown", last_name: "User" }, // Xử lý nếu user đã bị xóa
+              user: commentUser || {
+                _id: null,
+                first_name: "Unknown",
+                last_name: "User",
+              }, // Xử lý nếu user đã bị xóa
             };
           })
         );
@@ -474,9 +484,7 @@ app.get("/commentsOfUser/:id", requireLogin, async (req, res) => {
     allPhotos.forEach((photo) => {
       if (photo.comments) {
         photo.comments.forEach((comment) => {
-          
           if (comment.user_id.toString() === userId.toString()) {
-            
             userComments.push({
               _id: comment._id,
               comment: comment.comment,
@@ -549,90 +557,134 @@ app.post("/commentsOfPhoto/:photo_id", requireLogin, async (req, res) => {
 /**
  * PUT /commentsOfPhoto/:photo_id/:comment_id - Sửa comment
  */
-app.put("/commentsOfPhoto/:photo_id/:comment_id", requireLogin, async (req, res) => {
-  const { photo_id, comment_id } = req.params;
-  const { comment } = req.body;
+app.put(
+  "/commentsOfPhoto/:photo_id/:comment_id",
+  requireLogin,
+  async (req, res) => {
+    const { photo_id, comment_id } = req.params;
+    const { comment } = req.body;
 
-  // 1. SỬA LỖI: Lấy đúng ID từ session user object
-  const currentUserId = req.session.user._id; 
+    // 1. SỬA LỖI: Lấy đúng ID từ session user object
+    const currentUserId = req.session.user._id;
 
-  // 2. SỬA LỖI: Kiểm tra độ dài chuỗi (length)
-  if (!comment || comment.trim().length === 0) {
-    return res.status(400).json({ error: "Comment cannot be empty" });
+    // 2. SỬA LỖI: Kiểm tra độ dài chuỗi (length)
+    if (!comment || comment.trim().length === 0) {
+      return res.status(400).json({ error: "Comment cannot be empty" });
+    }
+
+    try {
+      const photo = await Photo.findOne({ _id: photo_id });
+      if (!photo) {
+        return res.status(404).json({ error: "Photo not found" });
+      }
+
+      const theComment = photo.comments.id(comment_id);
+      if (!theComment) {
+        return res.status(404).json({ error: "Comment not found" });
+      }
+
+      // Kiểm tra quyền sở hữu
+      if (theComment.user_id.toString() !== currentUserId.toString()) {
+        return res
+          .status(403)
+          .json({ error: "You are not authorized to edit this" });
+      }
+
+      // Cập nhật nội dung
+      theComment.comment = comment;
+      // (Tuỳ chọn) Lưu lại thời gian sửa nếu muốn
+      // theComment.date_time = new Date();
+
+      await photo.save();
+
+      console.log(`Comment updated by user ${currentUserId}`);
+      res.status(200).json(photo);
+    } catch (err) {
+      console.error("Edit comment error:", err);
+      res.status(500).json({ error: "Could not update comment" });
+    }
   }
+);
+app.delete(
+  "/commentsOfPhoto/:photo_id/:comment_id",
+  requireLogin,
+  async (req, res) => {
+    const { photo_id, comment_id } = req.params;
+    const currentUserId = req.session.user._id;
 
-  try {
-    const photo = await Photo.findOne({ _id: photo_id });
-    if (!photo) {
-      return res.status(404).json({ error: "Photo not found" });
+    try {
+      // 1. Tìm bài viết
+      const photo = await Photo.findOne({ _id: photo_id });
+      if (!photo) {
+        return res.status(404).json({ error: "Photo not found" });
+      }
+
+      // 2. Tìm comment
+      const theComment = photo.comments.id(comment_id);
+      if (!theComment) {
+        return res.status(404).json({ error: "Comment not found" });
+      }
+
+      // 3. Kiểm tra quyền: Chủ comment HOẶC Chủ bài đăng (Photo owner) mới được xóa
+      const isCommentOwner =
+        theComment.user_id.toString() === currentUserId.toString();
+      const isPhotoOwner =
+        photo.user_id.toString() === currentUserId.toString();
+
+      if (!isCommentOwner && !isPhotoOwner) {
+        return res
+          .status(403)
+          .json({ error: "You are not authorized to delete this comment" });
+      }
+
+      // 4. Xóa comment khỏi mảng
+      photo.comments.pull(comment_id);
+
+      await photo.save();
+
+      console.log(`Comment ${comment_id} deleted by user ${currentUserId}`);
+      res
+        .status(200)
+        .json({ message: "Comment deleted successfully", photo_id: photo_id });
+    } catch (err) {
+      console.error("Delete comment error:", err);
+      res.status(500).json({ error: "Could not delete comment" });
     }
-
-    const theComment = photo.comments.id(comment_id);
-    if (!theComment) {
-      return res.status(404).json({ error: "Comment not found" });
-    }
-
-    // Kiểm tra quyền sở hữu
-    if (theComment.user_id.toString() !== currentUserId.toString()) {
-      return res.status(403).json({ error: "You are not authorized to edit this" });
-    }
-
-    // Cập nhật nội dung
-    theComment.comment = comment;
-    // (Tuỳ chọn) Lưu lại thời gian sửa nếu muốn
-    // theComment.date_time = new Date(); 
-    
-    await photo.save();
-
-    console.log(`Comment updated by user ${currentUserId}`);
-    res.status(200).json(photo);
-
-  } catch (err) {
-    console.error("Edit comment error:", err);
-    res.status(500).json({ error: "Could not update comment" });
   }
-});
-app.delete('/commentsOfPhoto/:photo_id/:comment_id', requireLogin, async (req, res) => {
-  const { photo_id, comment_id } = req.params;
-  const currentUserId = req.session.user._id;
-
-  try {
-    // 1. Tìm bài viết
-    const photo = await Photo.findOne({ _id: photo_id });
-    if (!photo) {
-      return res.status(404).json({ error: "Photo not found" });
-    }
-
-    // 2. Tìm comment
-    const theComment = photo.comments.id(comment_id);
-    if (!theComment) {
-      return res.status(404).json({ error: "Comment not found" });
-    }
-
-    // 3. Kiểm tra quyền: Chủ comment HOẶC Chủ bài đăng (Photo owner) mới được xóa
-    const isCommentOwner = theComment.user_id.toString() === currentUserId.toString();
-    const isPhotoOwner = photo.user_id.toString() === currentUserId.toString();
-
-    if (!isCommentOwner && !isPhotoOwner) {
-      return res.status(403).json({ error: "You are not authorized to delete this comment" });
-    }
-
-    // 4. Xóa comment khỏi mảng
-    photo.comments.pull(comment_id); 
-    
-    await photo.save();
-
-    console.log(`Comment ${comment_id} deleted by user ${currentUserId}`);
-    res.status(200).json({ message: "Comment deleted successfully", photo_id: photo_id });
-
-  } catch (err) {
-    console.error("Delete comment error:", err);
-    res.status(500).json({ error: "Could not delete comment" });
-  }
-});
+);
 /**
  * POST /photos/new - Upload ảnh mới
  */
+/**
+ * PUT /photos/:id - Sửa mô tả (caption) của ảnh
+ */
+app.put("/photos/:id", requireLogin, async (req, res) => {
+  const { id } = req.params;
+  const { description } = req.body;
+  const currentUserId = req.session.user._id;
+
+  try {
+    const photo = await Photo.findById(id);
+    if (!photo) {
+      return res.status(404).json({ error: "Photo not found" });
+    }
+
+    // Kiểm tra quyền: Chỉ chủ ảnh mới được sửa
+    if (photo.user_id.toString() !== currentUserId.toString()) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // Cập nhật description
+    photo.description = description;
+    await photo.save();
+
+    console.log(`Photo ${id} caption updated by ${currentUserId}`);
+    res.status(200).json(photo);
+  } catch (err) {
+    console.error("Update photo error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 app.post(
   "/photos/new",
   requireLogin,
@@ -665,7 +717,45 @@ app.post(
     }
   }
 );
+/**
+ * DELETE /photos/:id - Xóa ảnh
+ */
+app.delete("/photos/:id", requireLogin, async (req, res) => {
+  const { id } = req.params;
+  const currentUserId = req.session.user._id;
 
+  try {
+    // 1. Tìm ảnh để lấy tên file (file_name)
+    const photo = await Photo.findById(id);
+    if (!photo) {
+      return res.status(404).json({ error: "Photo not found" });
+    }
+
+    // 2. Kiểm tra quyền: Chỉ chủ ảnh mới được xóa
+    if (photo.user_id.toString() !== currentUserId.toString()) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // 3. Xóa file ảnh vật lý trong thư mục (Optional - nhưng khuyên dùng)
+    const filePath = path.join(
+      __dirname,
+      "../photo-sharing-v1/src/images",
+      photo.file_name
+    );
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath); // Xóa file
+    }
+
+    // 4. Xóa ảnh khỏi Database
+    await Photo.deleteOne({ _id: id });
+
+    console.log(`Photo ${id} deleted by user ${currentUserId}`);
+    res.status(200).json({ message: "Photo deleted" });
+  } catch (err) {
+    console.error("Delete photo error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 /**
  * GET /test/info
  */
