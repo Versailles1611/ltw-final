@@ -136,6 +136,7 @@ const photoSchema = new mongoose.Schema({
   date_time: { type: Date, default: Date.now },
   user_id: { type: String, required: true },
   comments: [commentSchema],
+  likes: [String],
 });
 
 const User = mongoose.model("User", userSchema);
@@ -757,8 +758,39 @@ app.delete("/photos/:id", requireLogin, async (req, res) => {
   }
 });
 /**
- * GET /test/info
+ * POST /photos/:id/like - Thả tim hoặc Bỏ tim (Toggle)
  */
+app.post("/photos/:id/like", requireLogin, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.session.user._id;
+
+  try {
+    const photo = await Photo.findById(id);
+    if (!photo) return res.status(404).json({ error: "Photo not found" });
+
+    // Đảm bảo mảng likes tồn tại (đề phòng ảnh cũ chưa có field này)
+    if (!photo.likes) photo.likes = [];
+
+    // Kiểm tra xem user đã like chưa
+    const index = photo.likes.indexOf(userId);
+
+    if (index === -1) {
+      // Chưa like -> Thêm vào (LIKE)
+      photo.likes.push(userId);
+    } else {
+      // Đã like -> Xóa đi (UNLIKE)
+      photo.likes.splice(index, 1);
+    }
+
+    await photo.save();
+
+    // Trả về danh sách likes mới nhất để Frontend cập nhật
+    res.status(200).json(photo.likes);
+  } catch (err) {
+    console.error("Like error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 app.get("/test/info", (req, res) => {
   res.json({
     version: "2.0.0",

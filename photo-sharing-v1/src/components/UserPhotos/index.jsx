@@ -30,6 +30,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import axios from "axios"; // Đảm bảo đã cài: npm install axios
 import fetchModel from "../../lib/fetchModelData";
 
@@ -151,6 +153,25 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
     } catch (err) {
       console.error("Lỗi sửa caption:", err);
       alert("Không thể sửa mô tả ảnh");
+    }
+  };
+  // Hàm xử lý Like/Unlike
+  const handleLikePhoto = async (photoId) => {
+    try {
+      const response = await axios.post(
+        `${API_BASE}/photos/${photoId}/like`,
+        {}, // Body rỗng
+        { withCredentials: true }
+      );
+
+      // Cập nhật lại danh sách likes cho bức ảnh đó trong state
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p._id === photoId ? { ...p, likes: response.data } : p
+        )
+      );
+    } catch (err) {
+      console.error("Lỗi like ảnh:", err);
     }
   };
 
@@ -345,6 +366,30 @@ function UserPhotos({ advancedFeatures, setContextText, user: currentUser }) {
               justifyContent="space-between"
               alignItems="flex-start"
             >
+              <Box display="flex" alignItems="center">
+                <IconButton
+                  onClick={() => handleLikePhoto(photo._id)}
+                  disabled={!currentUser} // Chưa đăng nhập thì không bấm được
+                  sx={{
+                    color: (photo.likes || []).includes(currentUser?._id)
+                      ? "#f44336"
+                      : "#FFFFFF",
+                  }}
+                >
+                  {/* Nếu đã like thì hiện tim đặc, chưa like hiện tim rỗng */}
+                  {(photo.likes || []).includes(currentUser?._id) ? (
+                    <FavoriteIcon />
+                  ) : (
+                    <FavoriteBorderIcon />
+                  )}
+                </IconButton>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#FFFFFF", fontWeight: "bold" }}
+                >
+                  {(photo.likes || []).length}
+                </Typography>
+              </Box>
               <Typography
                 variant="body1"
                 sx={{ color: "#E0E0E0", fontWeight: 500, flex: 1 }}
